@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %} Home {% endblock %}
+
+
+{% block content %}
+
+
+<div class="pt-4 mb-4">
+        <img style="border-radius: 25px;" class="w-100" src="{% static 'images/welcome.svg' %}" />
+</div>
+
+<ul class="nav justify-content-center gap-5 mt-5">
+    {% for category in categories %}
+    <li>
+        <a style="width: 140px; height: 80px;" class="btn btn-outline-dark d-flex justify-content-center align-items-center" href="#">{{category.name}}</a>
+    </li>
+    {% endfor %}
+</ul>
+
+<div class="jumbotron jumbotron-fluid mt-5 mb-2">
+  <div class="container">
+    <h1 class="display-4">Top Sellers</h1>
+  </div>
+</div>
+
+<div class="d-flex w-100 m-auto justify-content-start align-items-center flex-wrap gap-5 pt-4"> 
+    {% for product in object_list %}
+        <div class="card" style="width: 18rem;">
+            <img src="{% static 'images/no-image.svg' %}" class="card-img-top" alt="...">
+            <div class="card-body">
+            <h5 class="card-title">{{product.title}} - <span class="text-muted">{{product.price}}$</span></h5>
+            <p class="card-text">{{product.description}}</p>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                <button class="btn btn-outline-dark w-50" type="button">Add</button>
+                <button class="btn btn-secondary me-md-2 w-50" type="button">Checkout</button>
+              </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+
+{% endblock %}
