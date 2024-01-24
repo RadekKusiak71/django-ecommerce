@@ -13,7 +13,7 @@
 <ul class="nav justify-content-center gap-5 mt-5">
     {% for category in categories %}
     <li>
-        <a style="width: 140px; height: 80px;" class="btn btn-outline-dark d-flex justify-content-center align-items-center" href="#">{{category.name}}</a>
+        <a style="width: 140px; height: 80px;" class="btn btn-outline-dark d-flex justify-content-center align-items-center" href="{% url 'products' %}?category={{ category.id }}">{{category.name}}</a>
     </li>
     {% endfor %}
 </ul>

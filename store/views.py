@@ -8,7 +8,7 @@ from django.core.paginator import Paginator
 
 class HomePage(ListView):
     template_name = 'home.html'
-    queryset = Product.objects.all().order_by('-sales_count')[0:10]
+    queryset = Product.objects.all().order_by('-sales_count')[0:8]
 
 
 class ProductsPage(ListView):
