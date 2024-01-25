@@ -48,7 +48,7 @@
                             <p class="card-text">{{ product.description }}</p>
                             <div class="d-grid gap-2 d-md-flex justify-content-md-start">
                                 <button class="btn btn-outline-dark w-50" type="button">Add</button>
-                                <button class="btn btn-secondary me-md-2 w-50" type="button">Checkout</button>
+                                <a class="btn btn-secondary me-md-2 w-50" type="button" href="{% url 'products' pk=product.id %}">Checkout</a>
                             </div>
                         </div>
                     </div>
@@ -62,7 +62,7 @@
                         <a class="page-link" href="?page={{ page_obj.previous_page_number }}" tabindex="-1">Previous</a>
                         {% endif %}
                         </li>
-                        <li class="page-item"><a class="page-link" href="#">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</a></li>
+                        <li class="page-item"><a class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</a></li>
                         <li class="page-item">
                         {% if page_obj.has_next %}
                         <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>

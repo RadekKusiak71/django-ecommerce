@@ -1,9 +1,31 @@
 from typing import Any
+from decimal import Decimal
+
+
+from django.views import View
+from django.contrib.auth.views import LoginView
+from django.views.generic import ListView, DetailView, CreateView
+
+from django.urls import reverse_lazy
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
-from django.views.generic import ListView
-from .models import Product
 from django.core.paginator import Paginator
+from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect
+
+from .models import Product, Cart, CartItem
+from .forms import UserRegisterForm
+
+
+
+class UserLoginView(LoginView):
+    template_name = 'login.html'
+    next_page = reverse_lazy('store-home')
+
+
+class UserCreateView(CreateView):
+    template_name = 'register.html'
+    form_class = UserRegisterForm
+    success_url = reverse_lazy('store-home')
 
 
 class HomePage(ListView):
@@ -11,7 +33,29 @@ class HomePage(ListView):
     queryset = Product.objects.all().order_by('-sales_count')[0:8]
 
 
-class ProductsPage(ListView):
+class ProductDetailView(DetailView):
+    model = Product
+    template_name = 'product.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Checking if object is discounted
+        if self.get_object().discount:
+            context['discounted_price'] = round(self.get_object(
+            ).price * Decimal(self.get_object().discount / 100), 2)
+
+        context['more_like_this'] = self.get_more_like_this()
+        return context
+
+    def get_more_like_this(self):
+        category = self.get_object().category
+        products = Product.objects.filter(
+            category=category, quantity__gt=0).exclude(title__contains=self.get_object().title).order_by('-sales_count')[0:3]
+        return products
+
+
+class ProductListView(ListView):
     template_name = 'products.html'
     queryset = Product.objects.all()
     paginate_by = 6

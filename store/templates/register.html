@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %} Sing Up {% endblock %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center pt-5">
+    <form method="post">
+        {% csrf_token %}
+        {{form|crispy}}
+        <button class="btn btn-primary w-100 mt-3">Register</button>
+        <small id="emailHelp" class="form-text text-muted d-flex justify-content-center mt-3">If you already have account. <a href="{% url 'login' %}">Click Here!</a></small>
+    </form>
+</div>
+{% endblock %}

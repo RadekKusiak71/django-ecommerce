@@ -1,10 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django_countries.fields import CountryField
+from decimal import Decimal
 
 
 class Customer(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='customer')
     street = models.CharField(max_length=100, null=True, blank=True)
     house_number = models.CharField(max_length=100, null=True, blank=True)
     zip_code = models.CharField(max_length=100, null=True, blank=True)
@@ -36,7 +38,7 @@ class Product(models.Model):
     def __str__(self):
         if not self.discount:
             return f'{self.title} - {self.price}$ discount '
-        return f'{self.title} - {self.price * (self.discount / 100)}'
+        return f'{self.title} - {self.price * Decimal(self.discount / 100)}'
 
 
 class Cart(models.Model):
