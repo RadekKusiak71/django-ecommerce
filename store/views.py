@@ -1,10 +1,12 @@
 from typing import Any
 from decimal import Decimal
+from django.db.models.query import QuerySet
 
 
 from django.views import View
 from django.contrib.auth.views import LoginView
 from django.views.generic import ListView, DetailView, CreateView
+from django.contrib import messages
 
 from django.urls import reverse_lazy
 from django.http import HttpRequest, HttpResponse
@@ -12,9 +14,72 @@ from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404, redirect
 
-from .models import Product, Cart, CartItem
+from .models import Product, Cart, CartItem, Customer
 from .forms import UserRegisterForm
 
+
+class CartDetailView(ListView):
+    template_name = 'cart.html'
+    model = Cart
+
+    def get_queryset(self) -> QuerySet[Any]:
+        if self.request.user.is_authenticated:
+            cart, created = Cart.objects.get_or_create(
+                customer=Customer.objects.get(user=self.request.user))
+        else:
+            if not self.request.session.exists(self.request.session.session_key):
+                self.request.session.create()
+            cart, created = Cart.objects.get_or_create(
+                session_id=self.request.session.session_key)
+        cart_items = CartItem.objects.filter(cart=cart)
+        print(cart_items)
+        return cart_items
+
+
+class ProductAddToCart(View):
+    def post(self, request, product_id):
+        product = Product.objects.get(id=product_id)
+
+        if not request.POST.get('quantity') or request.POST.get('quantity') == 0:
+            quantity = 1
+        else:
+            quantity = request.POST.get('quantity')
+
+        if product.quantity - int(quantity) >= 0:
+            cart = self.get_cart()
+            product.save()
+            self.check_for_items(cart, product, quantity)
+            return redirect('products')
+        else:
+            messages.error(request, f"There are only {
+                           product.quantity} pieces available.")
+            return redirect("product", product_id)
+
+    def get_cart(self):
+        if self.request.user.is_authenticated:
+            cart, created = Cart.objects.get_or_create(
+                customer=Customer.objects.get(user=self.request.user))
+        else:
+            if not self.request.session.exists(self.request.session.session_key):
+                self.request.session.create()
+            cart, created = Cart.objects.get_or_create(
+                session_id=self.request.session.session_key)
+        return cart
+
+    def check_for_items(self, cart, product, quantity):
+        if CartItem.objects.filter(cart=cart, product=product).exists():
+            cart_item = CartItem.objects.filter(
+                cart=cart, product=product).first()
+            if cart_item.quantity >= product.quantity:
+                messages.info(self.request, 'Can\'t add more')
+            else:
+                cart_item.quantity += int(quantity)
+                cart_item.total_price = product.price * cart_item.quantity
+                cart_item.save()
+        else:
+            total_price = product.price*int(quantity)
+            CartItem.objects.create(
+                cart=cart, product=product, quantity=quantity, total_price=total_price)
 
 
 class UserLoginView(LoginView):

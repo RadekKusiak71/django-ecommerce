@@ -58,6 +58,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+# Message storage configured
+MESSAGE_STORAGE = "django.contrib.messages.storage.cookie.CookieStorage"
 
 ROOT_URLCONF = 'SkyShop.urls'
 

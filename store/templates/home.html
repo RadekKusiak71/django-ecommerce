@@ -33,7 +33,7 @@
             <p class="card-text">{{product.description}}</p>
             <div class="d-grid gap-2 d-md-flex justify-content-md-start">
                 <button class="btn btn-outline-dark w-50" type="button">Add</button>
-                <button class="btn btn-secondary me-md-2 w-50" type="button">Checkout</button>
+                <a href="{% url 'product' pk=product.id%}" class="btn btn-secondary me-md-2 w-50" type="button">Checkout</a>
               </div>
             </div>
         </div>

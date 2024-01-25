@@ -11,7 +11,8 @@ class Customer(models.Model):
     house_number = models.CharField(max_length=100, null=True, blank=True)
     zip_code = models.CharField(max_length=100, null=True, blank=True)
     city = models.CharField(max_length=100, null=True, blank=True)
-    country = CountryField(null=True, blank=True)
+    country = models.CharField(max_length=200,  null=True, blank=True, choices=CountryField(
+    ).choices + [('', 'Select Country')])
     discount_points = models.PositiveIntegerField(default=0)
 
     def __str__(self):
@@ -42,18 +43,19 @@ class Product(models.Model):
 
 
 class Cart(models.Model):
+    session_id = models.CharField(max_length=100, null=True, blank=True)
     customer = models.ForeignKey(
-        Customer, on_delete=models.CASCADE)
-    total = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+        Customer, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
-        return f'Cart#{self.id} for customer#{self.customer.id}, total: {self.total}$'
+        return f'Cart#{self.id} for customer#{self.customer}'
 
 
 class CartItem(models.Model):
     cart = models.ForeignKey(
         Cart, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.PositiveIntegerField()
 
     def __str__(self):

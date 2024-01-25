@@ -21,7 +21,7 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
-    list_display = ('id', 'customer', 'total')
+    list_display = ('id', 'customer')
 
 
 @admin.register(CartItem)
