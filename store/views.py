@@ -6,6 +6,7 @@ from django.db.models.query import QuerySet
 from django.views import View
 from django.contrib.auth.views import LoginView
 from django.views.generic import ListView, DetailView, CreateView
+from django.views.generic.edit import DeleteView
 from django.contrib import messages
 
 from django.urls import reverse_lazy
@@ -14,8 +15,13 @@ from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404, redirect
 
-from .models import Product, Cart, CartItem, Customer
+from .models import Product, Cart, CartItem, Customer, Order
 from .forms import UserRegisterForm
+
+
+class CartItemDeleteView(DeleteView):
+    model = CartItem
+    success_url = reverse_lazy("cart")
 
 
 class CartDetailView(ListView):
@@ -32,12 +38,22 @@ class CartDetailView(ListView):
             cart, created = Cart.objects.get_or_create(
                 session_id=self.request.session.session_key)
         cart_items = CartItem.objects.filter(cart=cart)
+        self.check_if_available(cart_items)
         print(cart_items)
         return cart_items
 
+    def check_if_available(self, cart_items: QuerySet[CartItem]) -> None:
+        for item in cart_items:
+            product = item.product
+            if item.quantity > product.quantity:
+                item.quantity = product.quantity
+            item.save()
+            if item.quantity == 0:
+                item.delete()
+
 
 class ProductAddToCart(View):
-    def post(self, request, product_id):
+    def post(self, request, product_id) -> HttpResponse:
         product = Product.objects.get(id=product_id)
 
         if not request.POST.get('quantity') or request.POST.get('quantity') == 0:
@@ -55,7 +71,7 @@ class ProductAddToCart(View):
                            product.quantity} pieces available.")
             return redirect("product", product_id)
 
-    def get_cart(self):
+    def get_cart(self) -> Cart:
         if self.request.user.is_authenticated:
             cart, created = Cart.objects.get_or_create(
                 customer=Customer.objects.get(user=self.request.user))
@@ -66,7 +82,7 @@ class ProductAddToCart(View):
                 session_id=self.request.session.session_key)
         return cart
 
-    def check_for_items(self, cart, product, quantity):
+    def check_for_items(self, cart: Cart, product: Product, quantity: str) -> None:
         if CartItem.objects.filter(cart=cart, product=product).exists():
             cart_item = CartItem.objects.filter(
                 cart=cart, product=product).first()
@@ -102,7 +118,7 @@ class ProductDetailView(DetailView):
     model = Product
     template_name = 'product.html'
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
 
         # Checking if object is discounted
@@ -113,7 +129,7 @@ class ProductDetailView(DetailView):
         context['more_like_this'] = self.get_more_like_this()
         return context
 
-    def get_more_like_this(self):
+    def get_more_like_this(self) -> QuerySet[Product]:
         category = self.get_object().category
         products = Product.objects.filter(
             category=category, quantity__gt=0).exclude(title__contains=self.get_object().title).order_by('-sales_count')[0:3]
@@ -131,7 +147,7 @@ class ProductListView(ListView):
             '-price').first().price
         return context
 
-    def get_filter_data(self):
+    def get_filter_data(self) -> QuerySet[Product]:
         if self.request.GET:
             title = self.request.GET.get('search')
             sort_type = self.request.GET.get('sort')

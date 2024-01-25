@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import HomePage, ProductListView, ProductDetailView, CartDetailView, UserCreateView, UserLoginView, ProductAddToCart
+from .views import HomePage, ProductListView, ProductDetailView, CartItemDeleteView, CartDetailView, UserCreateView, UserLoginView, ProductAddToCart
 from django.contrib.auth import views as auth_views
 from django.urls import reverse_lazy
 
@@ -12,6 +12,8 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(next_page=reverse_lazy('store-home')), name='logout'),
     path('product/<int:product_id>/add/',
          ProductAddToCart.as_view(), name='add-product'),
+    path('product/<int:pk>/delete/',
+         CartItemDeleteView.as_view(), name='delete-product'),
     path('cart/',
          CartDetailView.as_view(), name='cart'),
 ]
