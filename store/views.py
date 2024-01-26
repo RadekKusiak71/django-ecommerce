@@ -6,7 +6,7 @@ from django.db.models.query import QuerySet
 from django.views import View
 from django.contrib.auth.views import LoginView
 from django.views.generic import ListView, DetailView, CreateView
-from django.views.generic.edit import DeleteView
+from django.views.generic.edit import DeleteView, FormMixin
 from django.contrib import messages
 
 from django.urls import reverse_lazy
@@ -14,9 +14,8 @@ from django.http import HttpRequest, HttpResponse
 from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404, redirect
-
-from .models import Product, Cart, CartItem, Customer, Order
-from .forms import UserRegisterForm
+from .models import Product, Cart, CartItem, Customer, Order, OrderItem
+from .forms import UserRegisterForm, OrderForm
 
 
 class CartItemDeleteView(DeleteView):
@@ -24,9 +23,11 @@ class CartItemDeleteView(DeleteView):
     success_url = reverse_lazy("cart")
 
 
-class CartDetailView(ListView):
+class CartDetailView(FormMixin, ListView):
     template_name = 'cart.html'
     model = Cart
+    form_class = OrderForm
+    success_url = reverse_lazy('store-home')
 
     def get_queryset(self) -> QuerySet[Any]:
         if self.request.user.is_authenticated:
@@ -50,6 +51,38 @@ class CartDetailView(ListView):
             item.save()
             if item.quantity == 0:
                 item.delete()
+
+    def form_valid(self, form: Any) -> HttpResponse:
+        order = form.save(commit=False)
+        if self.request.user.is_authenticated:
+            customer = Customer.objects.get(user=self.request.user)
+            cart = Cart.objects.get(customer=customer)
+            order.customer = customer
+        else:
+            session_key = self.request.session.session_key
+            order.session_id = session_key
+            cart = Cart.objects.get(session_id=session_key)
+
+        self.convert_cartitems_into_orderitems(
+            cart=cart, order=order)
+
+        return super().form_valid(form)
+
+    def convert_cartitems_into_orderitems(self, cart: Cart, order: Order):
+        items = CartItem.objects.filter(cart=cart)
+        order.save()
+        for item in items:
+            OrderItem.objects.create(
+                order=order, product=item.product, quantity=item.quantity, subtotal=item.total_price)
+            item.delete()
+        cart.delete()
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
 
 
 class ProductAddToCart(View):

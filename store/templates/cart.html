@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %} Filters {% endblock %}
-
+{% load crispy_forms_tags %}
 {% block content %}
 <div class="row d-flex justify-content-center align-items-center h-100">
     <div class="col-10 mt-4">
@@ -45,15 +45,34 @@
             </div>
         </div>
         {% endfor %}
+        <div class="card">
+          <div class="card-body">
+            <button type="button" id="proceed" class="btn btn-warning btn-block btn-lg">Order</button>
+          </div>
+        </div>
+  
       {% else %}
       <h1>No items in cart</h1>
       {% endif %}
-      <div class="card">
-        <div class="card-body">
-          <button type="button" class="btn btn-warning btn-block btn-lg">Proceed to Pay</button>
-        </div>
+      
+      <div class="order-form mt-5rr" style="display: none;">
+        <h1>Order Form</h1>
+        <form method="POST">
+          {% csrf_token %}
+          {{form|crispy}}
+          <button type="submit" class="btn btn-primary w-100 mt-2">Proceed to payment</button>
+        </form>
       </div>
 
     </div>
   </div>
+
+  <script>
+    const openForm = document.querySelector('#proceed');
+    const formContainer = document.querySelector('.order-form');
+    openForm.addEventListener('click',() => {
+      formContainer.style.display = 'block';
+    })
+  </script>
+
 {% endblock %}

@@ -31,7 +31,7 @@ class CartItemAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'customer', 'order_date', 'total', 'shipping_address', 'shipping_street',
+    list_display = ('id', 'customer', 'session_id', 'order_date', 'total', 'shipping_street',
                     'shipping_house_number', 'shipping_zip_code', 'shipping_city', 'shipping_country', 'shipping_status')
 
 

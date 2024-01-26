@@ -3,6 +3,13 @@ from django.forms import ModelForm
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django.core.validators import EmailValidator
+from .models import Order
+
+
+class OrderForm(ModelForm):
+    class Meta:
+        model = Order
+        exclude = ('session_id', 'shipping_status', 'customer', 'total',)
 
 
 class UserRegisterForm(UserCreationForm):
