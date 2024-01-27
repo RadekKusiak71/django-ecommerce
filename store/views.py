@@ -11,11 +11,21 @@ from django.contrib import messages
 
 from django.urls import reverse_lazy
 from django.http import HttpRequest, HttpResponse
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404, redirect
 from .models import Product, Cart, CartItem, Customer, Order, OrderItem
 from .forms import UserRegisterForm, OrderForm
+
+
+class ProfileOrderView(LoginRequiredMixin, ListView):
+    template_name = 'profile_orders.html'
+
+    def get_queryset(self) -> QuerySet[Any]:
+        queryset = Order.objects.filter(customer__user=self.request.user)
+        print(queryset)
+        return queryset
 
 
 class CartItemDeleteView(DeleteView):
@@ -71,6 +81,7 @@ class CartDetailView(FormMixin, ListView):
 
     def convert_cartitems_into_orderitems(self, cart: Cart, order: Order):
         items = CartItem.objects.filter(cart=cart)
+        order.total = sum([item.total_price for item in items])
         order.save()
         for item in items:
             OrderItem.objects.create(
@@ -81,16 +92,17 @@ class CartDetailView(FormMixin, ListView):
         cart.delete()
 
     def get_initial(self):
+        initial = super().get_initial()
         if self.request.user.is_authenticated:
             user = self.request.user
             customer = Customer.objects.get(user=user)
-            initial = super().get_initial()
             initial['email'] = user.email
             initial['shipping_street'] = customer.street
             initial['shipping_house_number'] = customer.house_number
             initial['shipping_zip_code'] = customer.zip_code
             initial['shipping_city'] = customer.city
             initial['shipping_country'] = customer.country
+
         return initial
 
     def post(self, request, *args, **kwargs):

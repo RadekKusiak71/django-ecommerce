@@ -73,6 +73,12 @@ class Order(models.Model):
         ('pr', 'Preparing'),
     )
 
+    def get_shipping_status_display(self):
+        for code, name in self.STATUS_CHOICES:
+            if code == self.shipping_status:
+                return name
+        return self.shipping_status
+
     session_id = models.CharField(max_length=100, null=True, blank=True)
     customer = models.ForeignKey(
         Customer, on_delete=models.CASCADE, null=True, blank=True)
@@ -88,7 +94,7 @@ class Order(models.Model):
     shipping_country = models.CharField(max_length=200, choices=CountryField(
     ).choices + [('', 'Select Country')])
     shipping_status = models.CharField(
-        max_length=3, choices=STATUS_CHOICES, default='p')
+        max_length=3, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
 
     def __str__(self):
         return f'Order#{self.id} , total: {self.total}$'

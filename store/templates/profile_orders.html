@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %} Orders {% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-center row">
+        <div class="col-md-8">
+            <div class="rounded">
+                <div class="table-responsive table-borderless">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>status</th>
+                                <th>Total</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-body">
+                            {% for order in object_list %}
+                            <tr class="cell-1">
+                                <td>#{{order.id}}</td>
+                                <td><span class="badge badge-success text-dark">{{order.get_shipping_status_display}}</span></td>
+                                <td>${{order.total}}</td>
+                                <td>{{order.order_date}}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
