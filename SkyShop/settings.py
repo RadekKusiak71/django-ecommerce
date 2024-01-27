@@ -71,6 +71,7 @@ TEMPLATES = [
         'OPTIONS': {
             'context_processors': [
                 # created context processors
+                'store.context_processor.get_customer',
                 'store.context_processor.categories_context',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import HomePage, ProductListView, ProductDetailView, ProfileOrderView, CartItemDeleteView, CartDetailView, UserCreateView, UserLoginView, ProductAddToCart
+from .views import HomePage, ProductListView, ProductDetailView, ProfileOrderView, ProfileUpdateView, CartItemDeleteView, CartDetailView, UserCreateView, UserLoginView, ProductAddToCart
 from django.contrib.auth import views as auth_views
 from django.urls import reverse_lazy
 
@@ -18,4 +18,6 @@ urlpatterns = [
          CartDetailView.as_view(), name='cart'),
     path('profile/',
          ProfileOrderView.as_view(), name='profile'),
+    path('profile/<int:pk>/',
+         ProfileUpdateView.as_view(), name='profile-edit'),
 ]

@@ -5,7 +5,7 @@ from django.db.models.query import QuerySet
 
 from django.views import View
 from django.contrib.auth.views import LoginView
-from django.views.generic import ListView, DetailView, CreateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.views.generic.edit import DeleteView, FormMixin
 from django.contrib import messages
 
@@ -19,12 +19,43 @@ from .models import Product, Cart, CartItem, Customer, Order, OrderItem
 from .forms import UserRegisterForm, OrderForm
 
 
+class ProfileUpdateView(UpdateView):
+    template_name = 'profile.html'
+    model = Customer
+    fields = ['street', 'house_number', 'zip_code', 'city', 'country',]
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if form.errors:
+            messages.error(
+                self.request, 'Profile update failed. Please check the form for errors.')
+        else:
+            messages.success(self.request, 'Profile updated successfully.')
+        return response
+
+    def get_success_url(self):
+        user_id = self.kwargs['pk']
+        return reverse_lazy('profile-edit', kwargs={'pk': user_id})
+
+    def get_initial(self):
+        initial = super().get_initial()
+        if self.request.user.is_authenticated:
+            user = self.request.user
+            customer = Customer.objects.get(user=user)
+            initial['street'] = customer.street
+            initial['house_number'] = customer.house_number
+            initial['zip_code'] = customer.zip_code
+            initial['city'] = customer.city
+            initial['country'] = customer.country
+
+        return initial
+
+
 class ProfileOrderView(LoginRequiredMixin, ListView):
     template_name = 'profile_orders.html'
 
     def get_queryset(self) -> QuerySet[Any]:
         queryset = Order.objects.filter(customer__user=self.request.user)
-        print(queryset)
         return queryset
 
 
