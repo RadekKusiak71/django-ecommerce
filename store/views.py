@@ -38,9 +38,10 @@ class CartDetailView(FormMixin, ListView):
                 self.request.session.create()
             cart, created = Cart.objects.get_or_create(
                 session_id=self.request.session.session_key)
+
         cart_items = CartItem.objects.filter(cart=cart)
         self.check_if_available(cart_items)
-        print(cart_items)
+
         return cart_items
 
     def check_if_available(self, cart_items: QuerySet[CartItem]) -> None:
@@ -75,7 +76,22 @@ class CartDetailView(FormMixin, ListView):
             OrderItem.objects.create(
                 order=order, product=item.product, quantity=item.quantity, subtotal=item.total_price)
             item.delete()
+            item.product.quantity -= item.quantity
+            item.product.save()
         cart.delete()
+
+    def get_initial(self):
+        if self.request.user.is_authenticated:
+            user = self.request.user
+            customer = Customer.objects.get(user=user)
+            initial = super().get_initial()
+            initial['email'] = user.email
+            initial['shipping_street'] = customer.street
+            initial['shipping_house_number'] = customer.house_number
+            initial['shipping_zip_code'] = customer.zip_code
+            initial['shipping_city'] = customer.city
+            initial['shipping_country'] = customer.country
+        return initial
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()

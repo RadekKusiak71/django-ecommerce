@@ -77,6 +77,7 @@ class Order(models.Model):
     customer = models.ForeignKey(
         Customer, on_delete=models.CASCADE, null=True, blank=True)
     order_date = models.DateTimeField(auto_now_add=True)
+    email = models.EmailField()
     total = models.DecimalField(default=0, max_digits=10, decimal_places=2)
 
     shipping_street = models.CharField(max_length=100)
@@ -86,10 +87,11 @@ class Order(models.Model):
     shipping_city = models.CharField(max_length=100)
     shipping_country = models.CharField(max_length=200, choices=CountryField(
     ).choices + [('', 'Select Country')])
-    shipping_status = models.CharField(max_length=3, choices=STATUS_CHOICES)
+    shipping_status = models.CharField(
+        max_length=3, choices=STATUS_CHOICES, default='p')
 
     def __str__(self):
-        return f'Order#{self.id} for customer#{self.customer.id}, total: {self.total}$'
+        return f'Order#{self.id} , total: {self.total}$'
 
 
 class OrderItem(models.Model):
