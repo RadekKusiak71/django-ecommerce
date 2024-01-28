@@ -4,8 +4,8 @@
 
 {% block content %}
 <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
-    <a href="{% url 'profile-edit' pk=request.user.id %}" class="btn btn-secondary me-md-2" type="button">Your data</a>
-    <a href="{% url 'profile' %}" class="btn btn-primary" type="button">You Orders</a>
+    <a href="{% url 'store:profile-edit' pk=request.user.id %}" class="btn btn-secondary me-md-2" type="button">Your data</a>
+    <a href="{% url 'store:profile' %}" class="btn btn-primary" type="button">You Orders</a>
     </div>
 <div class="container mt-5">
     <div class="d-flex justify-content-center row">

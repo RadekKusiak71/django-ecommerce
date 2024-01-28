@@ -3,6 +3,9 @@ from .views import HomePage, ProductListView, ProductDetailView, ProfileOrderVie
 from django.contrib.auth import views as auth_views
 from django.urls import reverse_lazy
 
+
+app_name = 'store'
+
 urlpatterns = [
     path('', HomePage.as_view(), name='store-home'),
     path('products/', ProductListView.as_view(), name='products'),

@@ -7,5 +7,7 @@ def categories_context(request):
 
 
 def get_customer(request):
-    customer = Customer.objects.get(user=request.user)
-    return {'customer': customer}
+    if request.user.is_authenticated:
+        customer = Customer.objects.get(user=request.user)
+        return {'customer': customer}
+    return {'customer': 'Not logged in'}

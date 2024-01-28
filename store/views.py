@@ -19,7 +19,7 @@ from .models import Product, Cart, CartItem, Customer, Order, OrderItem
 from .forms import UserRegisterForm, OrderForm
 
 
-class ProfileUpdateView(UpdateView):
+class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'profile.html'
     model = Customer
     fields = ['street', 'house_number', 'zip_code', 'city', 'country',]

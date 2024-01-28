@@ -29,7 +29,7 @@
             {% else %}
             <p class="h5 text-danger">Product Unavailable</p>
             {% endif %}
-            <form method="post" action="{% url 'add-product' product_id=object.id %}" class="d-flex flex-column gap-2">
+            <form method="post" action="{% url 'store:add-product' product_id=object.id %}" class="d-flex flex-column gap-2">
             {% csrf_token %}
               <div>
                 <label for="quantity" class="h5 text-muted">Quantity:</label>
@@ -60,7 +60,7 @@
                 <h5 class="card-title">{{ product.title }} - <span class="text-muted">{{ product.price }}$</span></h5>
                 <p class="card-text">{{ product.description }}</p>
                 <div class="d-grid gap-2 d-md-flex justify-content-md-start">
-                    <a class="btn btn-secondary me-md-2 w-100" type="button" href="{% url 'product' pk=product.id %}">Checkout</a>
+                    <a class="btn btn-secondary me-md-2 w-100" type="button" href="{% url 'store:product' pk=product.id %}">Checkout</a>
                 </div>
             </div>
         </div>

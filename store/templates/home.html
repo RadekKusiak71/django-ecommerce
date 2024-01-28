@@ -13,7 +13,7 @@
 <ul class="nav justify-content-center gap-5 mt-5">
     {% for category in categories %}
     <li>
-        <a style="width: 140px; height: 80px;" class="btn btn-outline-dark d-flex justify-content-center align-items-center" href="{% url 'products' %}?category={{ category.id }}">{{category.name}}</a>
+        <a style="width: 140px; height: 80px;" class="btn btn-outline-dark d-flex justify-content-center align-items-center" href="{% url 'store:products' %}?category={{ category.id }}">{{category.name}}</a>
     </li>
     {% endfor %}
 </ul>
@@ -33,7 +33,7 @@
             <p class="card-text">{{product.description}}</p>
             <div class="d-grid gap-2 d-md-flex justify-content-md-start">
                 <button class="btn btn-outline-dark w-50" type="button">Add</button>
-                <a href="{% url 'product' pk=product.id%}" class="btn btn-secondary me-md-2 w-50" type="button">Checkout</a>
+                <a href="{% url 'store:product' pk=product.id%}" class="btn btn-secondary me-md-2 w-50" type="button">Checkout</a>
               </div>
             </div>
         </div>
