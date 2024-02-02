@@ -47,7 +47,7 @@
                 </svg>
               </a>
               {% if user.is_authenticated %}
-              <a href="{% url 'profile-edit' pk=customer.id%}" class="btn btn-outline-secondary me-md-2" type="button">Profile</a>
+              <a href="{% url 'store:profile-edit' pk=customer.id%}" class="btn btn-outline-secondary me-md-2" type="button">Profile</a>
               <form method="post" action="{% url 'store:logout' %}">
                 {% csrf_token %}
                 <button class="btn btn-primary" type="submit">Logout</button>

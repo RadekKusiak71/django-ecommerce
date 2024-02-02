@@ -50,6 +50,10 @@ class Cart(models.Model):
     def __str__(self):
         return f'Cart#{self.id} for customer#{self.customer}'
 
+    def get_total_price(self):
+        items = CartItem.objects.filter(cart=self)
+        return sum([item.total_price for item in items])
+
 
 class CartItem(models.Model):
     cart = models.ForeignKey(
@@ -85,7 +89,8 @@ class Order(models.Model):
     order_date = models.DateTimeField(auto_now_add=True)
     email = models.EmailField()
     total = models.DecimalField(default=0, max_digits=10, decimal_places=2)
-
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
     shipping_street = models.CharField(max_length=100)
     shipping_house_number = models.CharField(
         max_length=100, null=True, blank=True)

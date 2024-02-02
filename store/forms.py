@@ -1,12 +1,22 @@
+from collections.abc import Mapping
+from typing import Any
 from django import forms
+from django.core.files.base import File
+from django.db.models.base import Model
 from django.forms import ModelForm
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django.core.validators import EmailValidator
+from django.forms.utils import ErrorList
 from .models import Order, Customer
 
 
 class OrderForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(OrderForm, self).__init__(*args, **kwargs)
+        for field in self.fields:
+            self.fields[field].widget.attrs['class'] = 'form-control'
+
     class Meta:
         model = Order
         exclude = ('session_id', 'shipping_status', 'customer', 'total',)

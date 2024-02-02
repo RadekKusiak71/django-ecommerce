@@ -19,6 +19,101 @@ from .models import Product, Cart, CartItem, Customer, Order, OrderItem
 from .forms import UserRegisterForm, OrderForm
 
 
+class ProfileOrderView(LoginRequiredMixin, ListView):
+    template_name = 'profile_orders.html'
+
+    def get_queryset(self) -> QuerySet[Any]:
+        queryset = Order.objects.filter(customer__user=self.request.user)
+        return queryset
+
+
+class OrderCreateView(CreateView):
+    form_class = OrderForm
+    template_name = 'order_details.html'
+
+    def get_cart(self):
+        if self.request.user.is_authenticated:
+            cart, created = Cart.objects.get_or_create(
+                customer=Customer.objects.get(user=self.request.user))
+        else:
+            if not self.request.session.exists(self.request.session.session_key):
+                self.request.session.create()
+            cart, created = Cart.objects.get_or_create(
+                session_id=self.request.session.session_key)
+        return cart
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        cart = self.get_cart()
+        cart_items = CartItem.objects.filter(cart=cart)
+        self.check_if_available(cart_items)
+        context['cart_items'] = CartItem.objects.filter(cart=cart)
+        context['cart_price'] = cart.get_total_price()
+        return context
+
+    def check_if_available(self, cart_items: QuerySet[CartItem]) -> None:
+        for item in cart_items:
+            product = item.product
+            if item.quantity > product.quantity:
+                item.quantity = product.quantity
+            item.save()
+            if item.quantity == 0:
+                item.delete()
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.initial = self.get_initial()
+        return form
+
+    def get_initial(self):
+        initial = super().get_initial()
+        if self.request.user.is_authenticated:
+            user = self.request.user
+            customer = Customer.objects.get(user=user)
+            initial['first_name'] = customer.user.first_name
+            initial['last_name'] = customer.user.last_name
+            initial['email'] = customer.user.email
+            initial['shipping_street'] = customer.street
+            initial['shipping_house_number'] = customer.house_number
+            initial['shipping_zip_code'] = customer.zip_code
+            initial['shipping_city'] = customer.city
+            initial['shipping_country'] = customer.country
+        return initial
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        order = form.save(commit=False)
+        cart = self.get_cart()
+
+        if self.request.user.is_authenticated:
+            order.customer = Customer.objects.get(user=self.request.user)
+        else:
+            order.session_id = self.request.session.session_key
+
+        self.convert_cartitems_into_orderitems(cart=cart, order=order)
+
+        if form.is_valid():
+            order.save()
+            print("Redirecting to store:store-home")
+            return redirect("store:store-home")
+        else:
+            print('Form is invalid. Errors:', form.errors)
+            return self.form_invalid(form)
+
+    def convert_cartitems_into_orderitems(self, cart: Cart, order: Order):
+        items = CartItem.objects.filter(cart=cart)
+        order.total = sum([item.total_price for item in items])
+        order.save()
+
+        for item in items:
+            OrderItem.objects.create(
+                order=order, product=item.product, quantity=item.quantity, subtotal=item.total_price)
+            item.product.quantity -= item.quantity
+            item.product.save()
+        items.delete()
+        cart.delete()
+
+
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'profile.html'
     model = Customer
@@ -35,42 +130,21 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_success_url(self):
         user_id = self.kwargs['pk']
-        return reverse_lazy('profile-edit', kwargs={'pk': user_id})
-
-    def get_initial(self):
-        initial = super().get_initial()
-        if self.request.user.is_authenticated:
-            user = self.request.user
-            customer = Customer.objects.get(user=user)
-            initial['street'] = customer.street
-            initial['house_number'] = customer.house_number
-            initial['zip_code'] = customer.zip_code
-            initial['city'] = customer.city
-            initial['country'] = customer.country
-
-        return initial
-
-
-class ProfileOrderView(LoginRequiredMixin, ListView):
-    template_name = 'profile_orders.html'
-
-    def get_queryset(self) -> QuerySet[Any]:
-        queryset = Order.objects.filter(customer__user=self.request.user)
-        return queryset
+        return reverse_lazy('store:profile-edit', kwargs={'pk': user_id})
 
 
 class CartItemDeleteView(DeleteView):
     model = CartItem
-    success_url = reverse_lazy("cart")
+    success_url = reverse_lazy("store:cart")
 
 
 class CartDetailView(FormMixin, ListView):
     template_name = 'cart.html'
     model = Cart
     form_class = OrderForm
-    success_url = reverse_lazy('store-home')
+    success_url = reverse_lazy('store:store-home')
 
-    def get_queryset(self) -> QuerySet[Any]:
+    def get_cart(self):
         if self.request.user.is_authenticated:
             cart, created = Cart.objects.get_or_create(
                 customer=Customer.objects.get(user=self.request.user))
@@ -79,9 +153,19 @@ class CartDetailView(FormMixin, ListView):
                 self.request.session.create()
             cart, created = Cart.objects.get_or_create(
                 session_id=self.request.session.session_key)
+        return cart
 
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        cart = self.get_cart()
+        context['cart_price'] = cart.get_total_price()
+        return context
+
+    def get_queryset(self) -> QuerySet[Any]:
+        cart = self.get_cart()
         cart_items = CartItem.objects.filter(cart=cart)
         self.check_if_available(cart_items)
+        print()
 
         return cart_items
 
@@ -93,55 +177,6 @@ class CartDetailView(FormMixin, ListView):
             item.save()
             if item.quantity == 0:
                 item.delete()
-
-    def form_valid(self, form: Any) -> HttpResponse:
-        order = form.save(commit=False)
-        if self.request.user.is_authenticated:
-            customer = Customer.objects.get(user=self.request.user)
-            cart = Cart.objects.get(customer=customer)
-            order.customer = customer
-        else:
-            session_key = self.request.session.session_key
-            order.session_id = session_key
-            cart = Cart.objects.get(session_id=session_key)
-
-        self.convert_cartitems_into_orderitems(
-            cart=cart, order=order)
-
-        return super().form_valid(form)
-
-    def convert_cartitems_into_orderitems(self, cart: Cart, order: Order):
-        items = CartItem.objects.filter(cart=cart)
-        order.total = sum([item.total_price for item in items])
-        order.save()
-        for item in items:
-            OrderItem.objects.create(
-                order=order, product=item.product, quantity=item.quantity, subtotal=item.total_price)
-            item.delete()
-            item.product.quantity -= item.quantity
-            item.product.save()
-        cart.delete()
-
-    def get_initial(self):
-        initial = super().get_initial()
-        if self.request.user.is_authenticated:
-            user = self.request.user
-            customer = Customer.objects.get(user=user)
-            initial['email'] = user.email
-            initial['shipping_street'] = customer.street
-            initial['shipping_house_number'] = customer.house_number
-            initial['shipping_zip_code'] = customer.zip_code
-            initial['shipping_city'] = customer.city
-            initial['shipping_country'] = customer.country
-
-        return initial
-
-    def post(self, request, *args, **kwargs):
-        form = self.get_form()
-        if form.is_valid():
-            return self.form_valid(form)
-        else:
-            return self.form_invalid(form)
 
 
 class ProductAddToCart(View):
@@ -157,11 +192,11 @@ class ProductAddToCart(View):
             cart = self.get_cart()
             product.save()
             self.check_for_items(cart, product, quantity)
-            return redirect('products')
+            return redirect('store:products')
         else:
-            messages.error(request, f"There are only {
-                           product.quantity} pieces available.")
-            return redirect("product", product_id)
+            messages.error(
+                request, f"There are only {product.quantity} pieces available.")
+            return redirect("store:product", product_id)
 
     def get_cart(self) -> Cart:
         if self.request.user.is_authenticated:
@@ -192,13 +227,13 @@ class ProductAddToCart(View):
 
 class UserLoginView(LoginView):
     template_name = 'login.html'
-    next_page = reverse_lazy('store-home')
+    next_page = reverse_lazy('store:store-home')
 
 
 class UserCreateView(CreateView):
     template_name = 'register.html'
     form_class = UserRegisterForm
-    success_url = reverse_lazy('store-home')
+    success_url = reverse_lazy('store:store-home')
 
 
 class HomePage(ListView):

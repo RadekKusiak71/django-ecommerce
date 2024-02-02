@@ -32,7 +32,10 @@
             <h5 class="card-title">{{product.title}} - <span class="text-muted">{{product.price}}$</span></h5>
             <p class="card-text">{{product.description}}</p>
             <div class="d-grid gap-2 d-md-flex justify-content-md-start">
-                <button class="btn btn-outline-dark w-50" type="button">Add</button>
+              <form class="w-50" method="POST" action="{% url 'store:add-product' product_id=product.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-dark w-100" type="button">Add</button>
+              </form>
                 <a href="{% url 'store:product' pk=product.id%}" class="btn btn-secondary me-md-2 w-50" type="button">Checkout</a>
               </div>
             </div>
